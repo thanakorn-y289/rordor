@@ -7,6 +7,30 @@
   <title>ระบบเช็คชื่อ นศท. · โรงเรียนปากช่อง</title>
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
+  <script>
+    /* เปิดจากแอป LINE/Facebook/Instagram/TikTok ฯลฯ (Google ไม่ให้เข้าสู่ระบบในเบราว์เซอร์ในแอป) → เด้งไปเบราว์เซอร์ของเครื่องอัตโนมัติ
+         LINE: ?openExternalBrowser=1 · Android: intent:// เปิด Chrome · iPhone (iOS 17+): x-safari-https:// เปิด Safari
+       ลองครั้งเดียวต่อแท็บ ถ้าไม่เด้ง ยังมีปุ่ม "เปิดในเบราว์เซอร์" ในการ์ดเข้าสู่ระบบ */
+    var IN_APP_RE = /\bLine\/|FBAN|FBAV|FB_IAB|FBIOS|Instagram|Messenger|musical_ly|TikTok|Bytedance|Twitter|MicroMessenger|KAKAOTALK|Snapchat|; wv\)/i;
+    function openExternal(force) {
+      var ua = navigator.userAgent, u = new URL(location.href);
+      if (!IN_APP_RE.test(ua)) return false;
+      if (/\bLine\//i.test(ua)) {
+        if (u.searchParams.get('openExternalBrowser') === '1' && !force) return false;
+        u.searchParams.set('openExternalBrowser', '1'); location.replace(u.toString()); return true;
+      }
+      try { if (!force && sessionStorage.getItem('rdExt')) return false; sessionStorage.setItem('rdExt', '1'); } catch (e) { }
+      u.searchParams.delete('openExternalBrowser');
+      if (/Android/i.test(ua)) {
+        location.href = 'intent://' + u.host + u.pathname + u.search + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' +
+          encodeURIComponent(u.toString()) + ';end';
+      } else if (/iPhone|iPad|iPod/i.test(ua)) {
+        location.href = 'x-safari-' + u.toString();
+      } else return false;
+      return true;
+    }
+    openExternal(false);
+  </script>
   <!-- ปุ่มเข้าสู่ระบบด้วย Google — skill pcschool-google-login (โค้ดชุดเดียวกับ /ask /doc /senddoc) -->
   <script src="https://accounts.google.com/gsi/client" async onload="window.gReady && window.gReady()"></script>
   <style>
@@ -60,7 +84,7 @@
     }
 
     // เบราว์เซอร์ในแอป (LINE/Facebook/Instagram) Google ไม่วาดปุ่ม → ปุ่ม "เปิดในเบราว์เซอร์"
-    var gInApp = /\bLine\/|FBAN|FBAV|Instagram/i.test(navigator.userAgent);
+    var gInApp = IN_APP_RE.test(navigator.userAgent);
     var gFbTimer = 0;
     function gFallback(kind) {
       var fb = document.getElementById('gfb'), btn = document.getElementById('gbtn');
@@ -68,7 +92,7 @@
       btn.style.display = 'none'; fb.style.display = 'flex';
       if (kind === 'open') {
         fb.innerHTML = '<span class="gfb-g">G</span>เปิดในเบราว์เซอร์เพื่อเข้าด้วย Google';
-        fb.onclick = function () { var u = new URL(location.href); u.searchParams.set('openExternalBrowser', '1'); location.href = u.toString(); };
+        fb.onclick = function () { openExternal(true); };
       } else {
         fb.innerHTML = '<span class="gfb-g">G</span>ลงชื่อเข้าใช้ด้วย Google';
         fb.onclick = function () { if (gReadyNow()) google.accounts.id.prompt(); else location.reload(); };
